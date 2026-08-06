@@ -1,0 +1,49 @@
+name: NC Urbanist Watch
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Skip committing state/dashboard changes"
+        type: boolean
+        default: true
+
+concurrency:
+  group: nc-urbanist-watch
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - run: pip install -r requirements.txt
+
+      - name: Check inbox and scan agendas
+        working-directory: scripts
+        env:
+          IMAP_USERNAME: ${{ secrets.IMAP_USERNAME }}
+          IMAP_APP_PASSWORD: ${{ secrets.IMAP_APP_PASSWORD }}
+        run: python main.py
+
+      - name: Commit updated state + dashboard
+        if: ${{ github.event_name == 'schedule' || inputs.dry_run == false }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase --autostash
+          git add data/seen_uids.json data/items.json docs/index.html
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: update flagged agenda items"
+            git push
+          fi

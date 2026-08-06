@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LA Neighborhood Council Urbanist Watch</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f7f7f5;
+    --card-bg: #ffffff;
+    --text: #1a1a1a;
+    --muted: #6b6b6b;
+    --border: #e3e2de;
+    --accent: #1f6f4a;
+    --housing: #8a4fbd;
+    --transit: #1f6fb0;
+    --bike: #1f8a5a;
+    --actionable-bg: #fff6da;
+    --actionable-border: #e0b400;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14161a;
+      --card-bg: #1d2025;
+      --text: #eceef0;
+      --muted: #9aa1a9;
+      --border: #2c3036;
+      --actionable-bg: #2a260f;
+      --actionable-border: #b89600;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 2rem 1rem 4rem;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.45;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+  .meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem; }
+  .council { margin-bottom: 2.5rem; }
+  .council h2 {
+    font-size: 1.15rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.4rem;
+    margin-bottom: 1rem;
+  }
+  .item {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+    margin-bottom: 0.9rem;
+  }
+  .item .subject { font-weight: 600; margin-bottom: 0.5rem; }
+  .item a.source { font-size: 0.85rem; color: var(--accent); }
+  .hit {
+    border-left: 3px solid var(--border);
+    padding: 0.4rem 0 0.4rem 0.7rem;
+    margin: 0.5rem 0;
+    font-size: 0.92rem;
+  }
+  .hit.actionable {
+    background: var(--actionable-bg);
+    border-left-color: var(--actionable-border);
+    border-radius: 0 6px 6px 0;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    color: white;
+    margin-right: 0.4rem;
+  }
+  .badge.housing { background: var(--housing); }
+  .badge.transit { background: var(--transit); }
+  .badge.biking_pedestrian { background: var(--bike); }
+  .badge.actionable-tag { background: var(--actionable-border); color: #2a2400; }
+  .term { font-weight: 600; }
+  .snippet { color: var(--muted); }
+  .empty {
+    text-align: center;
+    color: var(--muted);
+    padding: 4rem 1rem;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>LA Neighborhood Council Urbanist Watch</h1>
+  <div class="meta">0 flagged items across 0 councils &middot; updated 2026-08-06 15:17 UTC</div>
+
+  
+  <div class="empty">No agenda items flagged yet. This fills in as ENS notification emails arrive and agendas are scanned.</div>
+  
+
+  
+</div>
+</body>
+</html>

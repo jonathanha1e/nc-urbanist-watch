@@ -1,0 +1,4 @@
+requests
+pdfplumber
+python-dotenv
+jinja2
