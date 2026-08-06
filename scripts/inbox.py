@@ -11,6 +11,7 @@ import imaplib
 import os
 import re
 from email.message import Message
+from email.utils import parsedate_to_datetime
 
 PDF_LINK_RE = re.compile(r"https?://[^\s\"'<>]+\.pdf", re.IGNORECASE)
 
@@ -38,10 +39,23 @@ def _walk_parts(msg: Message):
         yield msg
 
 
+def _received_date(msg: Message) -> str | None:
+    """ISO date the email was sent, used as a fallback when no meeting date
+    can be found in the agenda PDF itself."""
+    date_header = msg.get("Date")
+    if not date_header:
+        return None
+    try:
+        return parsedate_to_datetime(date_header).date().isoformat()
+    except (TypeError, ValueError):
+        return None
+
+
 def parse_notification(msg: Message) -> dict:
-    """Extracts subject, sender, PDF links, and any PDF attachments (as bytes) from one email."""
+    """Extracts subject, sender, received date, PDF links, and any PDF attachments (as bytes) from one email."""
     subject = msg.get("Subject", "")
     sender = msg.get("From", "")
+    received_at = _received_date(msg)
     links: list[str] = []
     attachments: list[tuple[str, bytes]] = []
 
@@ -62,6 +76,7 @@ def parse_notification(msg: Message) -> dict:
     return {
         "subject": subject,
         "sender": sender,
+        "received_at": received_at,
         "pdf_links": list(dict.fromkeys(links)),
         "pdf_attachments": attachments,
     }

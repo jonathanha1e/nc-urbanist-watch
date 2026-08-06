@@ -12,7 +12,7 @@ import inbox
 import state
 from councils import match_council_name
 from dashboard import render_dashboard
-from extract_text import extract_pdf_text
+from extract_text import extract_meeting_date, extract_pdf_text
 from keywords import scan_text
 
 session = requests.Session()
@@ -27,12 +27,11 @@ def _download_pdf(url: str) -> bytes:
     return response.content
 
 
-def _scan_pdf_bytes(pdf_bytes: bytes) -> list[dict]:
+def _read_pdf_text(pdf_bytes: bytes) -> str:
     with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:
         tmp.write(pdf_bytes)
         tmp.flush()
-        text = extract_pdf_text(tmp.name)
-    return scan_text(text)
+        return extract_pdf_text(tmp.name)
 
 
 def process_notification(note: dict) -> list[dict]:
@@ -48,13 +47,15 @@ def process_notification(note: dict) -> list[dict]:
             print(f"  failed to download {link}: {e}")
 
     for source_name, pdf_bytes in sources:
-        hits = _scan_pdf_bytes(pdf_bytes)
+        text = _read_pdf_text(pdf_bytes)
+        hits = scan_text(text)
         if not hits:
             continue
         new_items.append({
             "council": council,
             "subject": note["subject"],
             "source": source_name,
+            "date": extract_meeting_date(text) or note.get("received_at"),
             "hits": hits,
         })
 

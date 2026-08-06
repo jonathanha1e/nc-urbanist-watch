@@ -15,9 +15,10 @@
     --accent: #1f6f4a;
     --housing: #8a4fbd;
     --transit: #1f6fb0;
-    --bike: #1f8a5a;
+    --mobility: #1f8a5a;
     --actionable-bg: #fff6da;
     --actionable-border: #e0b400;
+    --control-bg: #ffffff;
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -28,6 +29,7 @@
       --border: #2c3036;
       --actionable-bg: #2a260f;
       --actionable-border: #b89600;
+      --control-bg: #23262c;
     }
   }
   * { box-sizing: border-box; }
@@ -41,14 +43,52 @@
   }
   .wrap { max-width: 860px; margin: 0 auto; }
   h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
-  .meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem; }
-  .council { margin-bottom: 2.5rem; }
-  .council h2 {
-    font-size: 1.15rem;
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 0.4rem;
-    margin-bottom: 1rem;
+  .meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    align-items: center;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.9rem 1.1rem;
+    margin-bottom: 2rem;
   }
+  .filter-group { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+  .filter-group label.group-label { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+  }
+  .chip input { accent-color: var(--accent); }
+  select#council-filter {
+    font-size: 0.85rem;
+    padding: 0.35rem 0.6rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--control-bg);
+    color: var(--text);
+  }
+
+  .date-heading {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--muted);
+    margin: 2rem 0 0.75rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .date-heading:first-of-type { margin-top: 0; }
+
   .item {
     background: var(--card-bg);
     border: 1px solid var(--border);
@@ -56,6 +96,7 @@
     padding: 1rem 1.1rem;
     margin-bottom: 0.9rem;
   }
+  .item .council-name { font-size: 0.78rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.2rem; }
   .item .subject { font-weight: 600; margin-bottom: 0.5rem; }
   .item a.source { font-size: 0.85rem; color: var(--accent); }
   .hit {
@@ -82,7 +123,7 @@
   }
   .badge.housing { background: var(--housing); }
   .badge.transit { background: var(--transit); }
-  .badge.biking_pedestrian { background: var(--bike); }
+  .badge.mobility { background: var(--mobility); }
   .badge.actionable-tag { background: var(--actionable-border); color: #2a2400; }
   .term { font-weight: 600; }
   .snippet { color: var(--muted); }
@@ -96,13 +137,127 @@
 <body>
 <div class="wrap">
   <h1>LA Neighborhood Council Urbanist Watch</h1>
-  <div class="meta">0 flagged items across 0 councils &middot; updated 2026-08-06 15:33 UTC</div>
+  <div class="meta">0 flagged items &middot; updated 2026-08-06 15:42 UTC</div>
 
-  
-  <div class="empty">No agenda items flagged yet. This fills in as ENS notification emails arrive and agendas are scanned.</div>
-  
+  <div class="filters">
+    <div class="filter-group" id="topic-filters">
+      <span class="group-label">Topic</span>
+      
+      <label class="chip"><input type="checkbox" value="housing" checked> Housing</label>
+      
+      <label class="chip"><input type="checkbox" value="transit" checked> Transit</label>
+      
+      <label class="chip"><input type="checkbox" value="mobility" checked> Mobility</label>
+      
+    </div>
+    <div class="filter-group">
+      <span class="group-label">Council</span>
+      <select id="council-filter">
+        <option value="">All councils</option>
+      </select>
+    </div>
+  </div>
 
-  
+  <div id="feed"></div>
+  <div id="empty-state" class="empty" hidden>No items match the current filters.</div>
 </div>
+
+<script id="items-data" type="application/json">[]</script>
+<script id="councils-data" type="application/json">[]</script>
+<script id="category-labels-data" type="application/json">{"housing": "Housing", "transit": "Transit", "mobility": "Mobility"}</script>
+<script>
+(function () {
+  const ITEMS = JSON.parse(document.getElementById('items-data').textContent);
+  const COUNCILS = JSON.parse(document.getElementById('councils-data').textContent);
+  const CATEGORY_LABELS = JSON.parse(document.getElementById('category-labels-data').textContent);
+
+  const councilSelect = document.getElementById('council-filter');
+  for (const name of COUNCILS) {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    councilSelect.appendChild(opt);
+  }
+
+  function el(tag, attrs, children) {
+    const node = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (k === 'class') node.className = v;
+      else if (k === 'href') node.setAttribute('href', v);
+      else if (k === 'target') node.setAttribute('target', v);
+      else if (k === 'rel') node.setAttribute('rel', v);
+      else node.setAttribute(k, v);
+    }
+    for (const child of children || []) {
+      node.appendChild(typeof child === 'string' ? document.createTextNode(child) : child);
+    }
+    return node;
+  }
+
+  function selectedCategories() {
+    const boxes = document.querySelectorAll('#topic-filters input[type=checkbox]');
+    return new Set(Array.from(boxes).filter((b) => b.checked).map((b) => b.value));
+  }
+
+  function formatDate(iso) {
+    if (!iso) return 'Date unknown';
+    const d = new Date(iso + 'T00:00:00');
+    if (isNaN(d)) return 'Date unknown';
+    return d.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  }
+
+  function renderItem(item, activeCategories) {
+    const hits = item.hits.filter((h) => activeCategories.has(h.category));
+    const card = el('div', { class: 'item' }, [
+      el('div', { class: 'council-name' }, [item.council]),
+      el('div', { class: 'subject' }, [item.subject]),
+      el('a', { class: 'source', href: item.source, target: '_blank', rel: 'noopener' }, [item.source]),
+    ]);
+    for (const hit of hits) {
+      const hitDiv = el('div', { class: 'hit' + (hit.actionable ? ' actionable' : '') }, [
+        el('span', { class: 'badge ' + hit.category }, [CATEGORY_LABELS[hit.category] || hit.category]),
+      ]);
+      if (hit.actionable) {
+        hitDiv.appendChild(el('span', { class: 'badge actionable-tag' }, ['Actionable']));
+      }
+      hitDiv.appendChild(el('span', { class: 'term' }, [' ' + hit.term]));
+      hitDiv.appendChild(el('div', { class: 'snippet' }, ['…' + hit.snippet + '…']));
+      card.appendChild(hitDiv);
+    }
+    return card;
+  }
+
+  function render() {
+    const activeCategories = selectedCategories();
+    const activeCouncil = councilSelect.value;
+
+    const filtered = ITEMS.filter((item) => {
+      if (activeCouncil && item.council !== activeCouncil) return false;
+      return item.hits.some((h) => activeCategories.has(h.category));
+    });
+
+    filtered.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+    const feed = document.getElementById('feed');
+    feed.textContent = '';
+
+    let lastDate = undefined;
+    for (const item of filtered) {
+      if (item.date !== lastDate) {
+        feed.appendChild(el('div', { class: 'date-heading' }, [formatDate(item.date)]));
+        lastDate = item.date;
+      }
+      feed.appendChild(renderItem(item, activeCategories));
+    }
+
+    document.getElementById('empty-state').hidden = filtered.length > 0;
+  }
+
+  document.querySelectorAll('#topic-filters input[type=checkbox]').forEach((b) => b.addEventListener('change', render));
+  councilSelect.addEventListener('change', render);
+
+  render();
+})();
+</script>
 </body>
 </html>

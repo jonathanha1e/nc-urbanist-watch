@@ -1,8 +1,8 @@
 # NC Urbanist Watch
 
 A personal tool that watches Los Angeles's 99 Neighborhood Council agendas for
-items relevant to housing, transit, and biking/pedestrian infrastructure
-advocacy, and publishes a dashboard of what it finds.
+items relevant to housing, transit, and mobility (bike/pedestrian)
+infrastructure advocacy, and publishes a filterable dashboard of what it finds.
 
 **Live dashboard: https://jonathanha1e.github.io/nc-urbanist-watch/**
 
@@ -37,13 +37,22 @@ to scrape a website.
 2. `scripts/inbox.py` connects to that inbox over IMAP and finds new ENS
    notification emails.
 3. `scripts/main.py` downloads/extracts each notification's agenda PDF
-   (`scripts/extract_text.py`), scans the text for housing/transit/biking
-   keywords (`scripts/keywords.py`), and records any hits.
+   (`scripts/extract_text.py`, which also tries to pull out the meeting date),
+   scans the text for housing/transit/mobility keywords (`scripts/keywords.py`
+   + `scripts/keywords.json`), and records any hits.
 4. `scripts/state.py` tracks which emails have already been processed
    (`data/seen_uids.json`) and accumulates flagged items (`data/items.json`)
    across runs.
-5. `scripts/dashboard.py` renders `dashboard.html` from the accumulated
-   items, grouped by council.
+5. `scripts/dashboard.py` renders `docs/index.html` from the accumulated
+   items: a reverse-chronological feed grouped by meeting date, filterable in
+   the browser by topic (housing/transit/mobility) and by council.
+
+### Editing the keyword list
+
+All the terms live in `scripts/keywords.json`, grouped under `"housing"`,
+`"transit"`, and `"mobility"` -- to add or remove a term, just edit that
+file's arrays (no code changes, no restart needed beyond the next run). Terms
+are matched as whole words/phrases, case-insensitively.
 
 Keyword matching is a **triage filter, not a judgment call** -- it flags
 agenda items containing terms like "zone change," "bike lane," or "bus rapid
@@ -91,7 +100,7 @@ This repo is wired to run unattended:
 - `.github/workflows/watch.yml` runs `main.py` every 6 hours, then commits
   `data/seen_uids.json`, `data/items.json`, and `docs/index.html` if they
   changed.
-- GitHub Pages is configured to serve `docs/` from the `main` branch, so the
+- GitHub Pages is configured to serve `docs/` from the `master` branch, so the
   dashboard is live at the URL above without any separate deploy step.
 - Trigger a run manually anytime from the Actions tab ("NC Urbanist Watch" ->
   Run workflow), or with `gh workflow run watch.yml -f dry_run=false`.
